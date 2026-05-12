@@ -1,178 +1,218 @@
-from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
-import json
 import os
-from datetime import datetime
+import json
 import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from datetime import datetime
+
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 
 # 🔑 CONFIG
-TOKEN = os.getenv("8675240270:AAFr1QF-oLLcVXAnjniPWIqBhiXjTB9eyqI") or "8675240270:AAFr1QF-oLLcVXAnjniPWIqBhiXjTB9eyqI"
+TOKEN = "8675240270:AAFr1QF-oLLcVXAnjniPWIqBhiXjTB9eyqI"
 CANAL = "@yesterpreuwba"
 OWNER_ID = 7752782654
 
-# 📁 CARPETA SEGURA
-CARPETA = os.path.join(os.getenv("APPDATA") or ".", "RefesBot")
+print("🚀 INICIANDO BOT...")
+
+# 📁 ARCHIVOS
+CARPETA = "data"
 os.makedirs(CARPETA, exist_ok=True)
 
-ARCHIVO_DATOS = os.path.join(CARPETA, "datos.json")
-ARCHIVO_USERS = os.path.join(CARPETA, "users.json")
-ARCHIVO_ADMINS = os.path.join(CARPETA, "admins.json")
+DATOS = os.path.join(CARPETA, "datos.json")
+ADMINS = os.path.join(CARPETA, "admins.json")
+USERS = os.path.join(CARPETA, "users.json")
 
 
-# 📂 CARGAR
-def cargar(path):
+def load(file):
     try:
-        if not os.path.exists(path):
+        if not os.path.exists(file):
             return {}
-        with open(path, "r") as f:
+        with open(file, "r") as f:
             return json.load(f)
     except:
         return {}
 
 
-# 💾 GUARDAR
-def guardar(path, data):
-    with open(path, "w") as f:
+def save(file, data):
+    with open(file, "w") as f:
         json.dump(data, f)
 
 
-# 🔐 ROLES
-def es_owner(user_id):
-    return user_id == OWNER_ID
+# 🔐 PERMISOS
+def is_owner(uid):
+    return uid == OWNER_ID
 
 
-def es_admin(user_id):
-    admins = cargar(ARCHIVO_ADMINS)
-    return str(user_id) in admins or es_owner(user_id)
+def is_admin(uid):
+    admins = load(ADMINS)
+    return str(uid) in admins or is_owner(uid)
 
 
-def puede_refes(user_id):
-    users = cargar(ARCHIVO_USERS)
-    return str(user_id) in users or es_admin(user_id)
+def can_refes(uid):
+    users = load(USERS)
+    return str(uid) in users or is_admin(uid)
 
 
-# 👤 ADD USER (solo refes)
+# 👤 ADD USER
 async def adduser(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not es_owner(update.message.from_user.id):
+    if not is_owner(update.effective_user.id):
         return
 
     if not context.args:
         await update.message.reply_text("Usa: /adduser ID")
         return
 
-    user_id = context.args[0]
-    users = cargar(ARCHIVO_USERS)
-    users[user_id] = True
-    guardar(ARCHIVO_USERS, users)
+    users = load(USERS)
+    users[context.args[0]] = True
+    save(USERS, users)
 
-    await update.message.reply_text(f"👤 Usuario agregado: {user_id}")
+    await update.message.reply_text("Usuario agregado")
 
 
 # 🛡️ ADD ADMIN
 async def addadmin(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not es_owner(update.message.from_user.id):
+    if not is_owner(update.effective_user.id):
         return
 
     if not context.args:
         await update.message.reply_text("Usa: /addadmin ID")
         return
 
-    user_id = context.args[0]
-    admins = cargar(ARCHIVO_ADMINS)
-    admins[user_id] = True
-    guardar(ARCHIVO_ADMINS, admins)
+    admins = load(ADMINS)
+    admins[context.args[0]] = Trueimport os
+import json
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from datetime import datetime
 
-    await update.message.reply_text(f"🛡️ Admin agregado: {user_id}")
+from telegram import Update
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+
+# 🔑 CONFIG
+TOKEN = "8675240270:AAFr1QF-oLLcVXAnjniPWIqBhiXjTB9eyqI"
+CANAL = "@yesterpreuwba"
+OWNER_ID = 7752782654
+
+print("🚀 INICIANDO BOT...")
+
+# 📁 ARCHIVOS
+CARPETA = "data"
+os.makedirs(CARPETA, exist_ok=True)
+
+DATOS = os.path.join(CARPETA, "datos.json")
+ADMINS = os.path.join(CARPETA, "admins.json")
+USERS = os.path.join(CARPETA, "users.json")
+
+
+def load(file):
+    try:
+        if not os.path.exists(file):
+            return {}
+        with open(file, "r") as f:
+            return json.load(f)
+    except:
+        return {}
+
+
+def save(file, data):
+    with open(file, "w") as f:
+        json.dump(data, f)
+
+
+# 🔐 PERMISOS
+def is_owner(uid):
+    save(ADMINS, admins)
+
+    await update.message.reply_text("Admin agregado")
 
 
 # ❌ REMOVE
 async def remove(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not es_owner(update.message.from_user.id):
+    if not is_owner(update.effective_user.id):
         return
 
     if not context.args:
-        await update.message.reply_text("Usa: /remove ID")
         return
 
-    user_id = context.args[0]
+    uid = context.args[0]
 
-    admins = cargar(ARCHIVO_ADMINS)
-    users = cargar(ARCHIVO_USERS)
+    admins = load(ADMINS)
+    users = load(USERS)
 
-    if user_id in admins:
-        del admins[user_id]
-        guardar(ARCHIVO_ADMINS, admins)
+    admins.pop(uid, None)
+    users.pop(uid, None)
 
-    if user_id in users:
-        del users[user_id]
-        guardar(ARCHIVO_USERS, users)
+    save(ADMINS, admins)
+    save(USERS, users)
 
-    await update.message.reply_text(f"❌ Usuario eliminado: {user_id}")
+    await update.message.reply_text("Eliminado")
 
 
 # 🔄 RESET
 async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not es_admin(update.message.from_user.id):
+    if not is_admin(update.effective_user.id):
         return
 
-    guardar(ARCHIVO_DATOS, {})
-    await update.message.reply_text("🔄 Contadores reiniciados")
+    save(DATOS, {})
+    await update.message.reply_text("Reset hecho")
 
 
 # 📊 REPORTE
 async def reporte(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not es_admin(update.message.from_user.id):
+    if not is_admin(update.effective_user.id):
         return
 
     if len(context.args) < 3:
         await update.message.reply_text("Usa: /reporte abril 18 22")
         return
 
-    mes_texto = context.args[0].lower()
-    inicio = int(context.args[1])
-    fin = int(context.args[2])
-
     meses = {
-        "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
-        "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
-        "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12
+        "enero":1,"febrero":2,"marzo":3,"abril":4,
+        "mayo":5,"junio":6,"julio":7,"agosto":8,
+        "septiembre":9,"octubre":10,"noviembre":11,"diciembre":12
     }
 
-    if mes_texto not in meses:
+    mes = meses.get(context.args[0].lower())
+    if not mes:
         await update.message.reply_text("Mes inválido")
         return
 
-    mes_num = meses[mes_texto]
-    datos = cargar(ARCHIVO_DATOS)
-    resumen = {}
+    inicio = int(context.args[1])
+    fin = int(context.args[2])
 
-    for user_id, info in datos.items():
-        for ref in info.get("historial", []):
-            fecha = datetime.strptime(ref["fecha"], "%Y-%m-%d")
+    datos = load(DATOS)
+    res = {}
 
-            if fecha.month == mes_num and inicio <= fecha.day <= fin:
-                resumen[user_id] = resumen.get(user_id, 0) + 1
+    for uid, info in datos.items():
+        for h in info.get("historial", []):
+            fecha = datetime.strptime(h["fecha"], "%Y-%m-%d")
+            if fecha.month == mes and inicio <= fecha.day <= fin:
+                res[uid] = res.get(uid, 0) + 1
 
-    if not resumen:
-        await update.message.reply_text("No hay datos")
-        return
+    txt = "📊 REPORTE\n\n"
+    for uid, n in res.items():
+        txt += f"{uid}: {n}\n"
 
-    texto = f"📊 REPORTE ({mes_texto} {inicio}-{fin})\n\n"
-    for user_id, total in resumen.items():
-        texto += f"ID {user_id}: {total} refes\n"
-
-    await update.message.reply_text(texto)
+    await update.message.reply_text(txt)
 
 
-# 🚀 .refes
+# 🚀 REFES
 async def refes(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
 
-    if not msg or not puede_refes(msg.from_user.id):
-        return
-
-    if msg.text and msg.text.startswith("/"):
+    if not msg or not can_refes(msg.from_user.id):
         return
 
     if not msg.text or not msg.text.lower().startswith(".refes"):
@@ -183,69 +223,63 @@ async def refes(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     original = msg.reply_to_message
+    uid = str(msg.from_user.id)
 
-    user = msg.from_user
-    user_id = str(user.id)
-    username = f"@{user.username}" if user.username else user.first_name
-    grupo = msg.chat.title
+    datos = load(DATOS)
+    if uid not in datos:
+        datos[uid] = {"count": 0, "historial": []}
 
-    datos = cargar(ARCHIVO_DATOS)
-
-    if user_id not in datos:
-        datos[user_id] = {"count": 0, "historial": []}
-
-    datos[user_id]["count"] += 1
-    datos[user_id]["historial"].append({
+    datos[uid]["count"] += 1
+    datos[uid]["historial"].append({
         "fecha": datetime.now().strftime("%Y-%m-%d")
     })
 
-    guardar(ARCHIVO_DATOS, datos)
+    save(DATOS, datos)
 
-    numero = datos[user_id]["count"]
+    numero = datos[uid]["count"]
+    username = msg.from_user.username or msg.from_user.first_name
 
+    # 🔥 FORMATO FINAL (usuario normal + resto mono)
     caption = (
-        f"👑 ADMIN AYLES: {username}\n\n"
-        f"""```
-🛍️ REFES NUEVO
-
-📊 Tus refes: #{numero}
-
-💬 Descripción:
-GRACIAS POR ELEGIRNOS
-VUELVE PRONTO
-
-━━━━━━━━━━━━━━
-📢 Grupo: {grupo}
-```"""
+        f"👑 ADMIN AYLES: @{username}\n\n"
+        "```\n"
+        "🛍️ REFES NUEVO\n\n"
+        f"📊 Tus refes: #{numero}\n\n"
+        "💬 Descripción:\n"
+        "GRACIAS POR ELEGIRNOS\n"
+        "VUELVE PRONTO\n"
+        "```"
     )
 
-    await context.bot.copy_message(
-        chat_id=CANAL,
-        from_chat_id=original.chat_id,
-        message_id=original.message_id,
-        caption=caption,
-        parse_mode="Markdown"
-    )
+    try:
+        await context.bot.copy_message(
+            chat_id=CANAL,
+            from_chat_id=original.chat_id,
+            message_id=original.message_id,
+            caption=caption,
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        print("ERROR:", e)
 
 
-# 🌐 SERVIDOR PARA RENDER (NO SE DUERMA)
+# 🌐 SERVIDOR RENDER
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
-        self.wfile.write(b"Bot activo")
+        self.wfile.write(b"OK")
 
 
-def run_server():
+def run_web():
     port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), Handler)
-    server.serve_forever()
+    HTTPServer(("0.0.0.0", port), Handler).serve_forever()
 
 
-threading.Thread(target=run_server).start()
+threading.Thread(target=run_web).start()
 
 
-# ▶️ INICIAR BOT
+# ▶️ START
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("adduser", adduser))
@@ -255,5 +289,5 @@ app.add_handler(CommandHandler("reporte", reporte))
 app.add_handler(MessageHandler(filters.Regex(r"^\.reset$"), reset))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, refes))
 
-print("Bot 24/7 funcionando en Render 🚀")
+print("✅ BOT LISTO")
 app.run_polling()
